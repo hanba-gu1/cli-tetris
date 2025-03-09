@@ -1,7 +1,13 @@
 use crossterm::style::Color;
 
-enum MinoType {
-    I, O, S, Z, J, L, T,
+pub enum MinoType {
+    I,
+    O,
+    S,
+    Z,
+    J,
+    L,
+    T,
 }
 impl MinoType {
     fn color(&self) -> Color {
@@ -62,7 +68,10 @@ impl MinoType {
 
 #[derive(Clone, Copy)]
 enum Rotation {
-    A, B, C, D
+    A,
+    B,
+    C,
+    D,
 }
 impl Rotation {
     fn rotate_right(&self) -> Self {
@@ -73,7 +82,7 @@ impl Rotation {
             C => D,
             D => A,
         }
-    } 
+    }
     fn rotate_left(&self) -> Self {
         use Rotation::*;
         match self {
@@ -82,10 +91,10 @@ impl Rotation {
             C => B,
             D => C,
         }
-    } 
+    }
 }
 
-struct Mino {
+pub struct Mino {
     mino_type: MinoType,
     row: u16,
     column: u16,

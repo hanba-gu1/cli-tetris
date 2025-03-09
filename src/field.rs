@@ -8,9 +8,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{FIELD_HEIGHT, FIELD_WIDTH};
+const FIELD_HEIGHT: u16 = 20;
+const FIELD_WIDTH: u16 = 10;
 
-pub(super) struct Field {
+pub struct Field {
     blocks: [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize],
 }
 impl Field {
@@ -20,7 +21,7 @@ impl Field {
     }
 }
 
-pub(super) fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> Result<()> {
+pub fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> Result<()> {
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;
@@ -48,7 +49,7 @@ pub(super) fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> 
                 stdout(),
                 SetColors(Colors::new(dot_color, block.unwrap_or(field_color)))
             )?;
-            print!("・");
+            print!("　");
         }
         execute!(
             stdout(),

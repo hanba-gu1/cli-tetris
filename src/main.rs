@@ -5,6 +5,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use futures::{FutureExt, StreamExt};
+use mino::MinoType;
 use std::{
     io::{stdout, Result},
     sync::{Arc, Mutex},
@@ -13,10 +14,8 @@ use std::{
 mod field;
 use field::Field;
 
+mod hold;
 mod mino;
-
-const FIELD_HEIGHT: u16 = 20;
-const FIELD_WIDTH: u16 = 10;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -39,7 +38,7 @@ async fn main() -> Result<()> {
                 })
                 | Event::Resize(_, _) => {
                     let field = Arc::clone(&field);
-                    tokio::task::spawn_blocking(|| field::display_field(0, 0, field)).await??;
+                    tokio::task::spawn_blocking(|| hold::display_hold(0, 0, MinoType::I)).await??;
                 }
                 _ => {}
             }
