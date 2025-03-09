@@ -1,50 +1,52 @@
-use std::io::{stdout, Result};
 use crossterm::{
-    cursor::{Hide, MoveTo}, event::{Event, EventStream, KeyCode, KeyEvent}, execute, style::{Color, ResetColor, SetBackgroundColor}, terminal::{EnterAlternateScreen, LeaveAlternateScreen}
+    cursor::Hide,
+    event::{Event, EventStream, KeyCode, KeyEvent},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use futures::{FutureExt, StreamExt};
+use std::{
+    io::{stdout, Result},
+    sync::{Arc, Mutex},
+};
+
+mod field;
+use field::Field;
+
+mod mino;
+
+const FIELD_HEIGHT: u16 = 20;
+const FIELD_WIDTH: u16 = 10;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     execute!(stdout(), EnterAlternateScreen, Hide)?;
+    enable_raw_mode()?;
+
+    let field = Arc::new(Mutex::new(Field::new()));
 
     let mut reader = EventStream::new();
     loop {
         let input = reader.next().fuse().await;
         if let Some(Ok(event)) = input {
             match event {
-                Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => break,
-                Event::Key(KeyEvent { code: KeyCode::Char('r'), .. }) | Event::Resize(_, _) => tokio::task::spawn_blocking(|| display_field(0, 0)).await??,
+                Event::Key(KeyEvent {
+                    code: KeyCode::Esc, ..
+                }) => break,
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('r'),
+                    ..
+                })
+                | Event::Resize(_, _) => {
+                    let field = Arc::clone(&field);
+                    tokio::task::spawn_blocking(|| field::display_field(0, 0, field)).await??;
+                }
                 _ => {}
             }
         }
     }
     execute!(stdout(), LeaveAlternateScreen)?;
-
-    Ok(())
-}
-
-fn display_field(column: u16, row: u16) -> Result<()> {
-    let height = 20;
-    let width = 10;
-    let edge_color = Color::DarkBlue;
-    let field_color = Color::DarkGrey;
-    
-    execute!(stdout(), MoveTo(column, row), SetBackgroundColor(edge_color))?;
-    print!("{}", "　".repeat(width + 2));
-    for i in 0..height {
-        execute!(stdout(), MoveTo(column, row + i + 1),  SetBackgroundColor(edge_color))?;
-        print!("　");
-        execute!(stdout(), SetBackgroundColor(field_color))?;
-        print!("{}", "・".repeat(width));
-        execute!(stdout(), SetBackgroundColor(edge_color))?;
-        print!("　");
-        execute!(stdout(), ResetColor)?;
-        println!();
-    }
-    execute!(stdout(), MoveTo(column, row + height + 1), SetBackgroundColor(edge_color))?;
-    print!("{}", "　".repeat(width + 2));
-    execute!(stdout(), MoveTo(column, row), ResetColor)?;
+    disable_raw_mode()?;
 
     Ok(())
 }
