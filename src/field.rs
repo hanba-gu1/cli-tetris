@@ -75,7 +75,7 @@ pub fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> Result<
         )?;
         print!("　");
     }
-    execute!(stdout(), MoveTo(column, row), ResetColor)?;
+    execute!(stdout(), ResetColor)?;
 
     Ok(())
 }

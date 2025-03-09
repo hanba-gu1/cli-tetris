@@ -1,5 +1,6 @@
 use crossterm::style::Color;
 
+#[derive(Clone, Copy)]
 pub enum MinoType {
     I,
     O,
@@ -10,7 +11,7 @@ pub enum MinoType {
     T,
 }
 impl MinoType {
-    fn color(&self) -> Color {
+    pub fn color(&self) -> Color {
         use MinoType::*;
         match self {
             I => Color::Cyan,
@@ -22,7 +23,7 @@ impl MinoType {
             T => Color::DarkMagenta,
         }
     }
-    fn blocks(&self, rotation: Rotation) -> &[(u16, u16)] {
+    pub fn blocks(&self, rotation: Rotation) -> &[(u16, u16)] {
         use MinoType::*;
         match &self {
             I => match rotation {
@@ -67,7 +68,7 @@ impl MinoType {
 }
 
 #[derive(Clone, Copy)]
-enum Rotation {
+pub enum Rotation {
     A,
     B,
     C,

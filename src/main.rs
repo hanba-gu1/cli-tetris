@@ -14,7 +14,7 @@ use std::{
 mod field;
 use field::Field;
 
-mod hold;
+mod slot;
 mod mino;
 
 #[tokio::main]
@@ -38,7 +38,11 @@ async fn main() -> Result<()> {
                 })
                 | Event::Resize(_, _) => {
                     let field = Arc::clone(&field);
-                    tokio::task::spawn_blocking(|| hold::display_hold(0, 0, MinoType::I)).await??;
+                    tokio::task::spawn_blocking(|| {
+                        slot::display_hold(0, 0, MinoType::T)?;
+                        field::display_field(15, 0, field)?;
+                        slot::display_next(40, 0, vec![MinoType::T; 6])
+                    }).await??;
                 }
                 _ => {}
             }
