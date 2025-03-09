@@ -2,10 +2,13 @@ use crossterm::{
     cursor::Hide,
     event::{Event, EventStream, KeyCode, KeyEvent},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
 };
 use futures::{FutureExt, StreamExt};
-use mino::MinoType;
+use rand::{rng, seq::IndexedRandom};
 use std::{
     io::{stdout, Result},
     sync::{Arc, Mutex},
@@ -15,14 +18,29 @@ mod field;
 use field::Field;
 
 mod slot;
+
 mod mino;
+use mino::{Mino, MinoType};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     execute!(stdout(), EnterAlternateScreen, Hide)?;
     enable_raw_mode()?;
 
+    let mut rng = rng();
+
+    let all_minos = [
+        MinoType::I,
+        MinoType::J,
+        MinoType::L,
+        MinoType::O,
+        MinoType::S,
+        MinoType::T,
+        MinoType::Z,
+    ];
+
     let field = Arc::new(Mutex::new(Field::new()));
+    let current_mino = Some(Mino::new(*all_minos.choose(&mut rng).unwrap()));
 
     let mut reader = EventStream::new();
     loop {
@@ -38,11 +56,14 @@ async fn main() -> Result<()> {
                 })
                 | Event::Resize(_, _) => {
                     let field = Arc::clone(&field);
+                    let current_mino = current_mino.clone();
+                    execute!(stdout(), Clear(ClearType::All))?;
                     tokio::task::spawn_blocking(|| {
                         slot::display_hold(0, 0, MinoType::T)?;
-                        field::display_field(15, 0, field)?;
+                        field::display_field(15, 0, field, current_mino)?;
                         slot::display_next(40, 0, vec![MinoType::T; 6])
-                    }).await??;
+                    })
+                    .await??;
                 }
                 _ => {}
             }
@@ -53,3 +74,5 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+async fn main_loop() {}

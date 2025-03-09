@@ -8,6 +8,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use crate::mino::Mino;
+
 const FIELD_HEIGHT: u16 = 20;
 const FIELD_WIDTH: u16 = 10;
 
@@ -21,7 +23,12 @@ impl Field {
     }
 }
 
-pub fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> Result<()> {
+pub fn display_field(
+    column: u16,
+    row: u16,
+    field: Arc<Mutex<Field>>,
+    current_mino: Option<Mino>,
+) -> Result<()> {
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;
@@ -76,6 +83,30 @@ pub fn display_field(column: u16, row: u16, field: Arc<Mutex<Field>>) -> Result<
         print!("　");
     }
     execute!(stdout(), ResetColor)?;
+    println!();
+
+    if let Some(current_mino) = &current_mino {
+        display_mino(column, row, current_mino)?;
+    }
+
+    Ok(())
+}
+
+fn display_mino(column: u16, row: u16, mino: &Mino) -> Result<()> {
+    for (r, c) in mino.blocks() {
+        let mass_row = row as i16 + 1 + r;
+        let mass_column = column as i16 + 2 + c * 2;
+        if mass_column >= 0 && mass_row >= 0 {
+            execute!(
+                stdout(),
+                MoveTo(mass_column as u16, mass_row as u16),
+                SetBackgroundColor(mino.mino_type.color())
+            )?;
+            print!("　");
+            execute!(stdout(), ResetColor)?;
+        }
+    }
+    println!();
 
     Ok(())
 }

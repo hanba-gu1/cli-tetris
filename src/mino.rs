@@ -65,6 +65,14 @@ impl MinoType {
             },
         }
     }
+    fn start_pos(&self) -> (i16, i16) {
+        use MinoType::*;
+        match self {
+            I => (-1, 3),
+            O => (0, 4),
+            _ => (0, 3),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -95,9 +103,23 @@ impl Rotation {
     }
 }
 
+#[derive(Clone)]
 pub struct Mino {
-    mino_type: MinoType,
-    row: u16,
-    column: u16,
-    rotation: Rotation,
+    pub mino_type: MinoType,
+    pub row: i16,
+    pub column: i16,
+    pub rotation: Rotation,
+}
+impl Mino {
+    pub fn new(mino_type: MinoType) -> Self {
+        let (row, column) = mino_type.start_pos();
+        Self { mino_type, row, column, rotation: Rotation::A }
+    }
+    pub fn blocks(&self) -> Vec<(i16, i16)> {
+        self.mino_type
+            .blocks(self.rotation)
+            .iter()
+            .map(|(r, c)| (self.row + *r as i16, self.column + *c as i16))
+            .collect()
+    }
 }
