@@ -8,7 +8,7 @@ use crossterm::{
     },
 };
 use futures::{FutureExt, StreamExt};
-use rand::{rng, seq::IndexedRandom};
+use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use std::{
     io::{stdout, Result},
     sync::{Arc, Mutex},
@@ -22,6 +22,9 @@ mod slot;
 mod mino;
 use mino::{Mino, MinoType};
 
+mod operation;
+use operation::{change_mino, hold_mino};
+
 #[tokio::main]
 async fn main() -> Result<()> {
     execute!(stdout(), EnterAlternateScreen, Hide)?;
@@ -29,18 +32,15 @@ async fn main() -> Result<()> {
 
     let mut rng = rng();
 
-    let all_minos = [
-        MinoType::I,
-        MinoType::J,
-        MinoType::L,
-        MinoType::O,
-        MinoType::S,
-        MinoType::T,
-        MinoType::Z,
-    ];
+    let all_minos = MinoType::all_minos();
 
     let field = Arc::new(Mutex::new(Field::new()));
-    let current_mino = Some(Mino::new(*all_minos.choose(&mut rng).unwrap()));
+    let mut next_minos: Vec<_> = all_minos.into_iter().collect();
+    next_minos.shuffle(&mut rng);
+    let mut current_mino = None;
+    let mut held_mino: Option<MinoType> = None;
+
+    change_mino(&mut rng, &mut current_mino, &mut next_minos);
 
     let mut reader = EventStream::new();
     loop {
@@ -69,10 +69,9 @@ async fn main() -> Result<()> {
             }
         }
     }
+    
     execute!(stdout(), LeaveAlternateScreen)?;
     disable_raw_mode()?;
 
     Ok(())
 }
-
-async fn main_loop() {}

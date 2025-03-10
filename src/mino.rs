@@ -11,6 +11,18 @@ pub enum MinoType {
     T,
 }
 impl MinoType {
+    pub fn all_minos() -> Vec<MinoType> {
+        vec![
+            MinoType::I,
+            MinoType::J,
+            MinoType::L,
+            MinoType::O,
+            MinoType::S,
+            MinoType::T,
+            MinoType::Z,
+        ]
+    }
+    
     pub fn color(&self) -> Color {
         use MinoType::*;
         match self {
@@ -113,7 +125,12 @@ pub struct Mino {
 impl Mino {
     pub fn new(mino_type: MinoType) -> Self {
         let (row, column) = mino_type.start_pos();
-        Self { mino_type, row, column, rotation: Rotation::A }
+        Self {
+            mino_type,
+            row,
+            column,
+            rotation: Rotation::A,
+        }
     }
     pub fn blocks(&self) -> Vec<(i16, i16)> {
         self.mino_type
