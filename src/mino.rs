@@ -1,5 +1,10 @@
 use crossterm::style::Color;
 
+use crate::{
+    field::{FIELD_HEIGHT, FIELD_WIDTH},
+    GameState,
+};
+
 #[derive(Clone, Copy)]
 pub enum MinoType {
     I,
@@ -22,7 +27,7 @@ impl MinoType {
             MinoType::Z,
         ]
     }
-    
+
     pub fn color(&self) -> Color {
         use MinoType::*;
         match self {
@@ -95,23 +100,23 @@ pub enum Rotation {
     D,
 }
 impl Rotation {
-    fn rotate_right(&self) -> Self {
+    fn rotate_right(&mut self) {
         use Rotation::*;
-        match self {
+        *self = match self {
             A => B,
             B => C,
             C => D,
             D => A,
-        }
+        };
     }
-    fn rotate_left(&self) -> Self {
+    fn rotate_left(&mut self) {
         use Rotation::*;
-        match self {
+        *self = match self {
             A => D,
             B => A,
             C => B,
             D => C,
-        }
+        };
     }
 }
 
@@ -138,5 +143,15 @@ impl Mino {
             .iter()
             .map(|(r, c)| (self.row + *r as i16, self.column + *c as i16))
             .collect()
+    }
+    pub fn is_hit(&self, game_state: &GameState) -> bool {
+        for (r, c) in self.blocks() {
+            if !((0..FIELD_HEIGHT as i16).contains(&r) && (0..FIELD_WIDTH as i16).contains(&c)
+                || game_state.field.blocks[r as usize][c as usize].is_some())
+            {
+                return true;
+            }
+        }
+        false
     }
 }
