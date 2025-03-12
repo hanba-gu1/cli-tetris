@@ -13,6 +13,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use tokio::sync::mpsc;
 
 mod display;
 mod event;
@@ -104,12 +105,12 @@ impl GameState {
 }
 
 struct Timer {
-    sender: tokio::sync::mpsc::Sender<()>,
-    receiver: tokio::sync::mpsc::Receiver<()>,
+    sender: mpsc::Sender<()>,
+    receiver: mpsc::Receiver<()>,
 }
 impl Timer {
     fn new() -> Self {
-        let (sender, receiver) = tokio::sync::mpsc::channel(128);
+        let (sender, receiver) = mpsc::channel(128);
         Self { sender, receiver }
     }
     fn start(&self, time: Duration) {
