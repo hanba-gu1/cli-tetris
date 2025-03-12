@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
 async fn main_loop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
     let mut event_manager = event::EventManager::new();
     game_state.falling_timer.start(game_state.falling_speed);
-    
+
     let mut term_event_reader = EventStream::new();
     displayer.display();
     loop {
@@ -73,7 +73,6 @@ async fn main_loop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &
             }
         }
     }
-
 }
 
 struct GameState {
@@ -116,7 +115,11 @@ struct Timer {
 impl Timer {
     fn new() -> Self {
         let (sender, receiver) = mpsc::channel(128);
-        Self { sender, receiver, handle: None }
+        Self {
+            sender,
+            receiver,
+            handle: None,
+        }
     }
     fn start(&mut self, time: Duration) {
         if let Some(handle) = &self.handle {
