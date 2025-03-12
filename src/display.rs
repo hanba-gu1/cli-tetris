@@ -7,7 +7,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{field, slot, GameState};
+use crate::GameState;
+
+mod field;
+mod slot;
 
 pub struct Displayer {
     sender: std::sync::mpsc::Sender<()>,

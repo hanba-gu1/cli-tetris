@@ -1,10 +1,5 @@
 use crossterm::style::Color;
 
-use crate::{
-    field::{FIELD_HEIGHT, FIELD_WIDTH},
-    GameState,
-};
-
 #[derive(Clone, Copy)]
 pub enum MinoType {
     I,

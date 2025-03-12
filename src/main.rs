@@ -20,7 +20,6 @@ mod field;
 mod log;
 mod mino;
 mod operation;
-mod slot;
 
 use event::{Event, EventSender};
 use field::Field;
