@@ -17,7 +17,6 @@ use std::{
 mod display;
 mod event;
 mod field;
-mod log;
 mod mino;
 mod operation;
 
