@@ -1,9 +1,14 @@
 use crossterm::{
-    cursor::MoveTo, execute, style::{Color, Colors, Print, ResetColor, SetBackgroundColor, SetColors}
+    cursor::MoveTo,
+    execute,
+    style::{Color, Colors, Print, ResetColor, SetBackgroundColor, SetColors},
 };
 use std::io::{stdout, Result};
 
-use crate::{field::{Field, FIELD_HEIGHT, FIELD_WIDTH}, mino::Mino};
+use crate::{
+    field::{Field, FIELD_HEIGHT, FIELD_WIDTH},
+    mino::Mino,
+};
 
 pub fn display_field(
     column: u16,
