@@ -17,14 +17,14 @@ pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
 }
 
 pub fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
-    if game_state.current_mino.is_none() {
-        return;
-    }
+    let current_mino = match &mut game_state.current_mino {
+        Some(current_mino) => current_mino,
+        None => return,
+    };
+
     match &mut game_state.held_mino {
         Some(held_mino) => {
-            let temp = *held_mino;
-            *held_mino = game_state.current_mino.as_ref().unwrap().mino_type;
-            game_state.current_mino = Some(Mino::new(temp));
+            (*held_mino, *current_mino) = (current_mino.mino_type, Mino::new(*held_mino));
         }
         None => {
             game_state.held_mino = Some(game_state.current_mino.as_ref().unwrap().mino_type);

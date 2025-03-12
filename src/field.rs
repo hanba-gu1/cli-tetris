@@ -78,7 +78,7 @@ pub fn display_field(
     }
     execute!(stdout(), ResetColor)?;
 
-    if let Some(current_mino) = &current_mino {
+    if let Some(current_mino) = current_mino {
         display_mino(column, row, current_mino)?;
     }
 

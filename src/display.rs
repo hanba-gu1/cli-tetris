@@ -25,23 +25,23 @@ impl Displayer {
             let next_slot_row = 0;
 
             while let Ok(_) = receiver.recv() {
-                while receiver.iter().count() > 1 {
-                    let _ = receiver.recv();
+                if receiver.try_recv().is_ok() {
+                    continue;
                 }
-                
+
                 let game_state = game_state.lock().unwrap();
 
                 let next_minos = game_state.next_minos.as_slices();
                 let next_minos = [next_minos.0, next_minos.1].concat();
                 execute!(stdout(), Clear(ClearType::All))?;
                 slot::display_hold(hold_slot_column, hold_slot_row, &game_state.held_mino)?;
+                slot::display_next(next_slot_column, next_slot_row, &next_minos)?;
                 field::display_field(
                     field_column,
                     field_row,
                     &game_state.field,
                     &game_state.current_mino,
                 )?;
-                slot::display_next(next_slot_column, next_slot_row, &next_minos)?;
             }
 
             Ok(())
