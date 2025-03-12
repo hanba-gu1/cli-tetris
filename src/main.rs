@@ -34,22 +34,19 @@ async fn main() -> Result<()> {
     let mut rng = rand::rng();
     let mut event_manager = event::EventManager::new();
     let game_state = Arc::new(Mutex::new(GameState::new(&mut rng)));
-    let falling_speed = Duration::from_millis(1000);
     change_mino(&mut rng, &mut game_state.lock().unwrap());
     let mut timer = Timer::new();
     let displayer = Displayer::new(Arc::clone(&game_state))?;
     timer.start(Duration::from_secs(2));
 
-    let mut terminal_event_reader = EventStream::new();
+    let mut term_event_reader = EventStream::new();
     displayer.display();
     loop {
-        let term_event = terminal_event_reader.next().fuse();
-
         tokio::select! {
             Some(event) = event_manager.recv() => match event {
                 Event::End => break,
             },
-            Some(Ok(term_event)) = term_event => match term_event {
+            Some(Ok(term_event)) = term_event_reader.next().fuse() => match term_event {
                 TermEvent::Key(key_event) => {
                     key_pressed(&mut rng, &mut game_state.lock().unwrap(), &displayer, event_manager.sender(), key_event).await;
                 },
@@ -63,7 +60,7 @@ async fn main() -> Result<()> {
                     current_mino.row += 1;
                 }
                 displayer.display();
-                timer.start(falling_speed);
+                timer.start(game_state.lock().unwrap().falling_speed);
             }
         }
     }
@@ -81,25 +78,26 @@ struct GameState {
     current_mino: Option<Mino>,
     held_mino: Option<MinoType>,
     next_minos: VecDeque<MinoType>,
+    falling_speed: Duration,
 }
 impl GameState {
     fn new(rng: &mut ThreadRng) -> Self {
-        let all_minos = MinoType::all_minos();
-
         let field = Field::new();
         let next_minos: VecDeque<_> = {
-            let mut all_minos = all_minos.clone();
+            let mut all_minos = MinoType::all_minos();
             all_minos.shuffle(rng);
             all_minos.into_iter().collect()
         };
         let current_mino = None;
         let held_mino: Option<MinoType> = None;
+        let falling_speed = Duration::from_secs(1);
 
         Self {
             field,
             current_mino,
             held_mino,
             next_minos,
+            falling_speed,
         }
     }
 }
@@ -150,7 +148,7 @@ async fn key_pressed(
 
     fn move_mino(game_state: &mut GameState, displayer: &Displayer, move_column: i16) {
         if let Some(current_mino) = &mut game_state.current_mino {
-            let mut temp_mino  = current_mino.clone();
+            let mut temp_mino = current_mino.clone();
             temp_mino.column += move_column;
             if game_state.field.can_move(&temp_mino) {
                 *current_mino = temp_mino;
