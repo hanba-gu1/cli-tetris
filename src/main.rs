@@ -47,9 +47,9 @@ async fn main() -> Result<()> {
 async fn main_loop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
     let mut event_manager = event::EventManager::new();
     game_state.falling_timer.start(game_state.falling_speed);
-
     let mut term_event_reader = EventStream::new();
     displayer.display();
+
     loop {
         tokio::select! {
             Some(event) = event_manager.recv() => match event {
@@ -57,7 +57,7 @@ async fn main_loop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &
             },
             Some(Ok(term_event)) = term_event_reader.next().fuse() => match term_event {
                 TermEvent::Key(key_event) => {
-                    key_pressed(rng, game_state, &displayer, event_manager.sender(), key_event).await;
+                    key_pressed(rng, game_state, displayer, event_manager.sender(), key_event).await;
                 },
                 TermEvent::Resize(_, _) => {
                     displayer.display();
