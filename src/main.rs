@@ -150,8 +150,12 @@ async fn key_pressed(
 
     fn move_mino(game_state: &mut GameState, displayer: &Displayer, move_column: i16) {
         if let Some(current_mino) = &mut game_state.current_mino {
-            current_mino.column += move_column;
-            displayer.display();
+            let mut temp_mino  = current_mino.clone();
+            temp_mino.column += move_column;
+            if game_state.field.can_move(&temp_mino) {
+                *current_mino = temp_mino;
+                displayer.display();
+            }
         }
     }
     fn rotate_mino(game_state: &mut GameState, displayer: &Displayer, c: char) {
