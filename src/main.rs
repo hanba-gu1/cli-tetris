@@ -31,7 +31,6 @@ async fn main() -> Result<()> {
     enable_raw_mode()?;
 
     let mut rng = rand::rng();
-    // let mut logger = log::Logger::new(Path::new("./debug.log")).await?;
     let mut event_manager = event::EventManager::new();
     let game_state = Arc::new(Mutex::new(GameState::new(&mut rng)));
     let falling_speed = Duration::from_millis(1000);
