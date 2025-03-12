@@ -14,12 +14,11 @@ mod slot;
 
 pub struct Displayer {
     sender: std::sync::mpsc::Sender<()>,
-    handle: tokio::task::JoinHandle<Result<()>>,
 }
 impl Displayer {
     pub fn new(game_state: Arc<Mutex<GameState>>) -> Result<Self> {
         let (sender, receiver) = std::sync::mpsc::channel();
-        let handle = tokio::task::spawn_blocking(move || -> Result<()> {
+        tokio::task::spawn_blocking(move || -> Result<()> {
             let hold_slot_column = 0;
             let hold_slot_row = 0;
             let field_column = 15;
@@ -49,14 +48,10 @@ impl Displayer {
 
             Ok(())
         });
-        Ok(Self { sender, handle })
+        Ok(Self { sender })
     }
 
     pub fn display(&self) {
         let _ = self.sender.send(());
-    }
-
-    pub fn end(&self) {
-        self.handle.abort();
     }
 }
