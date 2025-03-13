@@ -2,7 +2,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom};
 
 use crate::{
     mino::{Mino, MinoType},
-    GameState,
+    GameState, Timer,
 };
 
 pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
@@ -16,7 +16,7 @@ pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
     game_state.current_mino = Some(Mino::new(game_state.next_minos.pop_front().unwrap()));
 }
 
-pub fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
+pub fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {
     let current_mino = match &mut game_state.current_mino {
         Some(current_mino) => current_mino,
         None => return,
@@ -28,6 +28,24 @@ pub fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
         }
         None => {
             game_state.held_mino = Some(game_state.current_mino.as_ref().unwrap().mino_type);
+            change_mino(rng, game_state);
+        }
+    }
+    falling_timer.start(game_state.falling_speed);
+}
+
+pub fn fall_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
+    if let Some(current_mino) = &mut game_state.current_mino {
+        let temp_mino = Mino {
+            row: current_mino.row + 1,
+            ..*current_mino
+        };
+        if game_state.field.can_move(&temp_mino) {
+            *current_mino = temp_mino;
+        } else {
+            for (r, c) in current_mino.blocks() {
+                game_state.field.blocks[r as usize][c as usize] = Some(current_mino.mino_type.color());
+            }
             change_mino(rng, game_state);
         }
     }
