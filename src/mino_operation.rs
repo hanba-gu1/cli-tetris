@@ -1,6 +1,7 @@
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 
 use crate::{
+    display::Displayer,
     mino::{Mino, MinoType},
     GameState, Timer,
 };
@@ -46,5 +47,46 @@ pub fn fall_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
             game_state.field.place_mino(current_mino);
             change_mino(rng, game_state);
         }
+    }
+}
+
+pub fn move_mino(
+    game_state: &mut GameState,
+    displayer: &Displayer,
+    move_row: i16,
+    move_column: i16,
+) {
+    if let Some(current_mino) = &mut game_state.current_mino {
+        let mut temp_mino = current_mino.clone();
+        temp_mino.column += move_column;
+        temp_mino.row += move_row;
+        if game_state.field.can_move(&temp_mino) {
+            *current_mino = temp_mino;
+            displayer.display();
+        }
+    }
+}
+
+pub fn rotate_mino(game_state: &mut GameState, displayer: &Displayer, c: char) {
+    if let Some(current_mino) = &mut game_state.current_mino {
+        let mut temp_mino = current_mino.clone();
+        match c {
+            'x' => temp_mino.rotation.rotate_right(),
+            'z' => temp_mino.rotation.rotate_left(),
+            _ => {}
+        }
+        if game_state.field.can_move(&temp_mino) {
+            *current_mino = temp_mino;
+            displayer.display();
+        }
+    }
+}
+
+pub fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
+    if let Some(current_mino) = &mut game_state.current_mino {
+        *current_mino = game_state.field.ghost_mino(current_mino);
+        game_state.field.place_mino(current_mino);
+        change_mino(rng, game_state);
+        displayer.display();
     }
 }

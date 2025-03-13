@@ -7,14 +7,11 @@ use std::io::{stdout, Result};
 
 use crate::{
     field::{FIELD_HEIGHT, FIELD_WIDTH},
-    mino::Mino, GameState,
+    mino::Mino,
+    GameState,
 };
 
-pub fn display_field(
-    column: u16,
-    row: u16,
-    game_state: &GameState,
-) -> Result<()> {
+pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()> {
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;
@@ -78,12 +75,16 @@ pub fn display_field(
 
 fn display_mino(column: u16, row: u16, mino: &Mino, is_ghost: bool) -> Result<()> {
     let ghost_color = Color::DarkGrey;
-    
+
     for (r, c) in mino.blocks() {
         let mass_row = row as i16 + 1 + r;
         let mass_column = column as i16 + 2 + c * 2;
         if 0 <= mass_column && 0 <= mass_row {
-            let color = if is_ghost { ghost_color } else { mino.mino_type.color() };
+            let color = if is_ghost {
+                ghost_color
+            } else {
+                mino.mino_type.color()
+            };
             execute!(
                 stdout(),
                 MoveTo(mass_column as u16, mass_row as u16),

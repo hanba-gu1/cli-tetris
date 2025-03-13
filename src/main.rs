@@ -19,12 +19,12 @@ mod display;
 mod event;
 mod field;
 mod mino;
-mod operation;
+mod mino_operation;
 
 use event::{Event, EventSender};
 use field::Field;
 use mino::{Mino, MinoType};
-use operation::{change_mino, fall_mino, hold_mino};
+use mino_operation::{change_mino, fall_mino, hard_drop, hold_mino, move_mino, rotate_mino};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -157,40 +157,6 @@ async fn key_pressed(
             }
             KeyCode::Char(' ') => hard_drop(rng, game_state, displayer),
             _ => {}
-        }
-    }
-
-    fn move_mino(game_state: &mut GameState, displayer: &Displayer, move_row: i16, move_column: i16) {
-        if let Some(current_mino) = &mut game_state.current_mino {
-            let mut temp_mino = current_mino.clone();
-            temp_mino.column += move_column;
-            temp_mino.row += move_row;
-            if game_state.field.can_move(&temp_mino) {
-                *current_mino = temp_mino;
-                displayer.display();
-            }
-        }
-    }
-    fn rotate_mino(game_state: &mut GameState, displayer: &Displayer, c: char) {
-        if let Some(current_mino) = &mut game_state.current_mino {
-            let mut temp_mino = current_mino.clone();
-            match c {
-                'x' => temp_mino.rotation.rotate_right(),
-                'z' => temp_mino.rotation.rotate_left(),
-                _ => {}
-            }
-            if game_state.field.can_move(&temp_mino) {
-                *current_mino = temp_mino;
-                displayer.display();
-            }
-        }
-    }
-    fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
-        if let Some(current_mino) = &mut game_state.current_mino {
-            *current_mino = game_state.field.ghost_mino(current_mino);
-            game_state.field.place_mino(current_mino);
-            change_mino(rng, game_state);
-            displayer.display();
         }
     }
 }

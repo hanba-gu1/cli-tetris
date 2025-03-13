@@ -38,11 +38,7 @@ impl Displayer {
                 execute!(stdout(), Clear(ClearType::All))?;
                 slot::display_hold(hold_slot_column, hold_slot_row, &game_state.held_mino)?;
                 slot::display_next(next_slot_column, next_slot_row, &next_minos)?;
-                field::display_field(
-                    field_column,
-                    field_row,
-                    &game_state
-                )?;
+                field::display_field(field_column, field_row, &game_state)?;
             }
 
             Ok(())

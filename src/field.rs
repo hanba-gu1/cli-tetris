@@ -30,7 +30,10 @@ impl Field {
     pub fn clear_lines(&mut self) {
         let mut clear_lines_count = 0;
         for row in (0..FIELD_HEIGHT as i16).rev() {
-            if self.blocks[row as usize].iter().all(|block| block.is_some()) {
+            if self.blocks[row as usize]
+                .iter()
+                .all(|block| block.is_some())
+            {
                 clear_lines_count += 1;
             } else {
                 if clear_lines_count > 0 {
