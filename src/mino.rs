@@ -87,7 +87,7 @@ impl MinoType {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Rotation {
     A,
     B,
@@ -138,5 +138,53 @@ impl Mino {
             .iter()
             .map(|(r, c)| (self.row + *r as i16, self.column + *c as i16))
             .collect()
+    }
+    pub fn super_rotation(&self, old_rotation: Rotation) -> &[(i16, i16)] {
+        match self.mino_type {
+            MinoType::I => match old_rotation {
+                Rotation::A => match self.rotation {
+                    Rotation::B => &[(0, 0), (0, -2), (0, 1), (1, -2), (-2, 1)],
+                    Rotation::D => &[(0, 0), (0, -1), (0, 2), (-2, -1), (1, 2)],
+                    _ => panic!(),
+                },
+                Rotation::B => match self.rotation {
+                    Rotation::C => &[(0, 0), (0, -1), (0, 2), (-2, -1), (1, 2)],
+                    Rotation::A => &[(0, 0), (0, 2), (0, -1), (-1, 2), (2, -1)],
+                    _ => panic!(),
+                },
+                Rotation::C => match self.rotation {
+                    Rotation::D => &[(0, 0), (0, 2), (0, -1), (-1, 2), (2, -1)],
+                    Rotation::B => &[(0, 0), (0, 1), (0, -2), (2, 1), (-1, -2)],
+                    _ => panic!(),
+                },
+                Rotation::D => match self.rotation {
+                    Rotation::A => &[(0, 0), (0, 1), (0, -2), (2, 1), (-1, -2)],
+                    Rotation::C => &[(0, 0), (0, -2), (0, 1), (1, -2), (-2, 1)],
+                    _ => panic!(),
+                },
+            },
+            _ => match old_rotation {
+                Rotation::A => match self.rotation {
+                    Rotation::B => &[(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)],
+                    Rotation::D => &[(0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)],
+                    _ => panic!(),
+                },
+                Rotation::B => match self.rotation {
+                    Rotation::C => &[(0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)],
+                    Rotation::A => &[(0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)],
+                    _ => panic!(),
+                },
+                Rotation::C => match self.rotation {
+                    Rotation::D => &[(0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)],
+                    Rotation::B => &[(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)],
+                    _ => panic!(),
+                },
+                Rotation::D => match self.rotation {
+                    Rotation::A => &[(0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)],
+                    Rotation::C => &[(0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)],
+                    _ => panic!(),
+                },
+            },
+        }
     }
 }

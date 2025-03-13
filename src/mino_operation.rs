@@ -75,9 +75,17 @@ pub fn rotate_mino(game_state: &mut GameState, displayer: &Displayer, c: char) {
             'z' => temp_mino.rotation.rotate_left(),
             _ => {}
         }
-        if game_state.field.can_move(&temp_mino) {
-            *current_mino = temp_mino;
-            displayer.display();
+        for (r, c) in temp_mino.super_rotation(current_mino.rotation) {
+            let temp_mino = Mino {
+                row: temp_mino.row + r,
+                column: temp_mino.column + c,
+                ..temp_mino
+            };
+            if game_state.field.can_move(&temp_mino) {
+                *current_mino = temp_mino;
+                displayer.display();
+                break;
+            }
         }
     }
 }
