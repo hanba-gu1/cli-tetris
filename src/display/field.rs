@@ -6,15 +6,14 @@ use crossterm::{
 use std::io::{stdout, Result};
 
 use crate::{
-    field::{Field, FIELD_HEIGHT, FIELD_WIDTH},
-    mino::Mino,
+    field::{FIELD_HEIGHT, FIELD_WIDTH},
+    mino::Mino, GameState,
 };
 
 pub fn display_field(
     column: u16,
     row: u16,
-    field: &Field,
-    current_mino: &Option<Mino>,
+    game_state: &GameState,
 ) -> Result<()> {
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
@@ -29,7 +28,7 @@ pub fn display_field(
             Print("　"),
         )?;
     }
-    for (i, blocks_row) in field.blocks.iter().enumerate() {
+    for (i, blocks_row) in game_state.field.blocks.iter().enumerate() {
         execute!(
             stdout(),
             MoveTo(column, row + i as u16 + 1),
@@ -68,22 +67,27 @@ pub fn display_field(
     }
     execute!(stdout(), ResetColor)?;
 
-    if let Some(current_mino) = current_mino {
-        display_mino(column, row, current_mino)?;
+    if let Some(current_mino) = &game_state.current_mino {
+        let ghost_mino = game_state.field.ghost_mino(current_mino);
+        display_mino(column, row, &ghost_mino, true)?;
+        display_mino(column, row, current_mino, false)?;
     }
 
     Ok(())
 }
 
-fn display_mino(column: u16, row: u16, mino: &Mino) -> Result<()> {
+fn display_mino(column: u16, row: u16, mino: &Mino, is_ghost: bool) -> Result<()> {
+    let ghost_color = Color::DarkGrey;
+    
     for (r, c) in mino.blocks() {
         let mass_row = row as i16 + 1 + r;
         let mass_column = column as i16 + 2 + c * 2;
-        if mass_column >= 0 && mass_row >= 0 {
+        if 0 <= mass_column && 0 <= mass_row {
+            let color = if is_ghost { ghost_color } else { mino.mino_type.color() };
             execute!(
                 stdout(),
                 MoveTo(mass_column as u16, mass_row as u16),
-                SetBackgroundColor(mino.mino_type.color()),
+                SetBackgroundColor(color),
                 Print("　"),
             )?;
             execute!(stdout(), ResetColor)?;

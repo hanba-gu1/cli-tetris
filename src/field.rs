@@ -21,4 +21,31 @@ impl Field {
     pub fn can_move(&self, mino: &Mino) -> bool {
         mino.blocks().iter().all(|(r, c)| self.is_empty(*r, *c))
     }
+    pub fn place_mino(&mut self, mino: &Mino) {
+        for (r, c) in mino.blocks() {
+            self.blocks[r as usize][c as usize] = Some(mino.mino_type.color());
+        }
+        self.clear_lines();
+    }
+    pub fn clear_lines(&mut self) {
+        let mut clear_lines_count = 0;
+        for row in (0..FIELD_HEIGHT as i16).rev() {
+            if self.blocks[row as usize].iter().all(|block| block.is_some()) {
+                clear_lines_count += 1;
+            } else {
+                if clear_lines_count > 0 {
+                    self.blocks[(row + clear_lines_count) as usize] = self.blocks[row as usize];
+                    self.blocks[row as usize].fill(None);
+                }
+            }
+        }
+    }
+    pub fn ghost_mino(&self, mino: &Mino) -> Mino {
+        let mut ghost_mino = mino.clone();
+        while self.can_move(&ghost_mino) {
+            ghost_mino.row += 1;
+        }
+        ghost_mino.row -= 1;
+        ghost_mino
+    }
 }

@@ -143,9 +143,7 @@ async fn key_pressed(
 ) {
     if key_event.kind == KeyEventKind::Press {
         match key_event.code {
-            KeyCode::Esc => {
-                event_sender.send(Event::End).await;
-            }
+            KeyCode::Esc => event_sender.send(Event::End).await,
             KeyCode::Right => move_mino(game_state, displayer, 0, 1),
             KeyCode::Left => move_mino(game_state, displayer, 0, -1),
             KeyCode::Down => {
@@ -157,7 +155,7 @@ async fn key_pressed(
                 hold_mino(rng, game_state, falling_timer);
                 displayer.display();
             }
-            KeyCode::Char(' ') => hard_drop(game_state, displayer),
+            KeyCode::Char(' ') => hard_drop(rng, game_state, displayer),
             _ => {}
         }
     }
@@ -187,13 +185,11 @@ async fn key_pressed(
             }
         }
     }
-    fn hard_drop(game_state: &mut GameState, displayer: &Displayer) {
+    fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
         if let Some(current_mino) = &mut game_state.current_mino {
-            let mut temp_mino = current_mino.clone();
-            while game_state.field.can_move(&temp_mino) {
-                *current_mino = temp_mino.clone();
-                temp_mino.row += 1;
-            }
+            *current_mino = game_state.field.ghost_mino(current_mino);
+            game_state.field.place_mino(current_mino);
+            change_mino(rng, game_state);
             displayer.display();
         }
     }

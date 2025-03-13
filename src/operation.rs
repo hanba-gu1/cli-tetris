@@ -43,9 +43,7 @@ pub fn fall_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
         if game_state.field.can_move(&temp_mino) {
             *current_mino = temp_mino;
         } else {
-            for (r, c) in current_mino.blocks() {
-                game_state.field.blocks[r as usize][c as usize] = Some(current_mino.mino_type.color());
-            }
+            game_state.field.place_mino(current_mino);
             change_mino(rng, game_state);
         }
     }

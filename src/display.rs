@@ -41,8 +41,7 @@ impl Displayer {
                 field::display_field(
                     field_column,
                     field_row,
-                    &game_state.field,
-                    &game_state.current_mino,
+                    &game_state
                 )?;
             }
 
