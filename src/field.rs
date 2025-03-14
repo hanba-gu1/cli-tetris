@@ -5,6 +5,7 @@ use crate::mino::Mino;
 pub const FIELD_HEIGHT: u16 = 20;
 pub const FIELD_WIDTH: u16 = 10;
 
+#[derive(Clone, PartialEq)]
 pub struct Field {
     pub blocks: [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize],
 }

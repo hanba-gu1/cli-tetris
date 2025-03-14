@@ -1,6 +1,6 @@
 use crossterm::style::Color;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum MinoType {
     I,
     O,
@@ -115,7 +115,7 @@ impl Rotation {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Mino {
     pub mino_type: MinoType,
     pub row: i16,

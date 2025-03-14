@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
     let mut rng = rand::rng();
     let game_state = Arc::new(Mutex::new(GameState::new(&mut rng)));
     let displayer = Displayer::new(Arc::clone(&game_state))?;
-    change_mino(&mut rng, &mut game_state.lock().unwrap(), &displayer);
+    change_mino(&mut rng, &mut game_state.lock().unwrap());
 
     main_loop(&mut rng, Arc::clone(&game_state), &displayer).await;
 
@@ -51,6 +51,8 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
     falling_timer.start(game_state.lock().unwrap().falling_speed);
     displayer.all();
 
+    let mut pre_game_state = game_state.lock().unwrap().clone();
+
     loop {
         tokio::select! {
             Some(event) = event_manager.recv() => match event {
@@ -58,26 +60,36 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
             },
             Some(Ok(term_event)) = term_event_reader.next().fuse() => match term_event {
                 TermEvent::Key(key_event) => {
-                    key_pressed(rng, &mut game_state.lock().unwrap(), displayer, &mut falling_timer, event_manager.sender(), key_event).await;
+                    key_pressed(rng, &mut game_state.lock().unwrap(), &mut falling_timer, event_manager.sender(), key_event).await;
                 },
                 TermEvent::Resize(_, _) => displayer.all(),
                 _ => {}
             },
-            Some(_) = falling_timer.receive() => {
-                let game_state = &mut game_state.lock().unwrap();
-                fall_mino(rng, game_state, displayer);
-                falling_timer.start(game_state.falling_speed);
-            }
+            Some(_) = falling_timer.receive() => fall_mino(rng, &mut game_state.lock().unwrap(), &mut falling_timer),
         }
+
+        let game_state = game_state.lock().unwrap();
+        if game_state.field != pre_game_state.field || game_state.current_mino != pre_game_state.current_mino {
+            displayer.field();
+        }
+        if game_state.held_mino != pre_game_state.held_mino {
+            displayer.hold();
+        }
+        if game_state.next_minos != pre_game_state.next_minos {
+            displayer.next();
+        }
+        pre_game_state = game_state.clone();
     }
 }
 
+#[derive(Clone)]
 struct GameState {
     field: Field,
     current_mino: Option<Mino>,
     held_mino: Option<MinoType>,
     next_minos: VecDeque<MinoType>,
     falling_speed: Duration,
+    can_hold: bool,
 }
 impl GameState {
     fn new(rng: &mut ThreadRng) -> Self {
@@ -90,6 +102,7 @@ impl GameState {
         let current_mino = None;
         let held_mino: Option<MinoType> = None;
         let falling_speed = Duration::from_secs(1);
+        let can_hold = true;
 
         Self {
             field,
@@ -97,6 +110,7 @@ impl GameState {
             held_mino,
             next_minos,
             falling_speed,
+            can_hold,
         }
     }
 }
@@ -133,7 +147,6 @@ impl Timer {
 async fn key_pressed(
     rng: &mut ThreadRng,
     game_state: &mut GameState,
-    displayer: &Displayer,
     falling_timer: &mut Timer,
     event_sender: EventSender,
     key_event: KeyEvent,
@@ -141,17 +154,15 @@ async fn key_pressed(
     if key_event.kind == KeyEventKind::Press {
         match key_event.code {
             KeyCode::Esc => event_sender.send(Event::End).await,
-            KeyCode::Right => move_mino(game_state, displayer, 0, 1),
-            KeyCode::Left => move_mino(game_state, displayer, 0, -1),
+            KeyCode::Right => move_mino(game_state, 0, 1),
+            KeyCode::Left => move_mino(game_state, 0, -1),
             KeyCode::Down => {
-                move_mino(game_state, displayer, 1, 0);
+                move_mino(game_state, 1, 0);
                 falling_timer.start(game_state.falling_speed);
             }
-            KeyCode::Char(c) if ['x', 'z'].contains(&c) => rotate_mino(game_state, displayer, c),
-            KeyCode::Char('c') => {
-                hold_mino(rng, game_state, displayer, falling_timer);
-            }
-            KeyCode::Char(' ') => hard_drop(rng, game_state, displayer, falling_timer),
+            KeyCode::Char(c) if ['x', 'z'].contains(&c) => rotate_mino(game_state, c),
+            KeyCode::Char('c') => hold_mino(rng, game_state, falling_timer),
+            KeyCode::Char(' ') => hard_drop(rng, game_state, falling_timer),
             _ => {}
         }
     }
