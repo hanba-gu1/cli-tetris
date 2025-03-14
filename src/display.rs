@@ -45,10 +45,15 @@ impl Displayer {
                         slot::display_next(next_slot_column, next_slot_row, &next_minos)?;
                         field::display_field(field_column, field_row, &game_state)?;
                     }
-                    DisplayMessage::Field => field::display_field(field_column, field_row, &game_state)?,
-                    DisplayMessage::Hold => slot::display_hold(hold_slot_column, hold_slot_row, &game_state.held_mino)?,
-                    DisplayMessage::Next => slot::display_next(next_slot_column, next_slot_row, &next_minos)?,
-                    
+                    DisplayMessage::Field => {
+                        field::display_field(field_column, field_row, &game_state)?
+                    }
+                    DisplayMessage::Hold => {
+                        slot::display_hold(hold_slot_column, hold_slot_row, &game_state.held_mino)?
+                    }
+                    DisplayMessage::Next => {
+                        slot::display_next(next_slot_column, next_slot_row, &next_minos)?
+                    }
                 }
             }
 

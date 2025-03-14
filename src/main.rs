@@ -127,6 +127,11 @@ impl Timer {
             let _ = sender.send(()).await;
         }));
     }
+    fn stop(&mut self) {
+        if let Some(handle) = &self.handle {
+            handle.abort();
+        }
+    }
     async fn receive(&mut self) -> Option<()> {
         self.receiver.recv().await
     }

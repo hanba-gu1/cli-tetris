@@ -74,7 +74,11 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
     Ok(())
 }
 
-fn display_mino(mino: &Mino, is_ghost: bool, display_block: &mut [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize]) {
+fn display_mino(
+    mino: &Mino,
+    is_ghost: bool,
+    display_block: &mut [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize],
+) {
     let ghost_color = Color::DarkGrey;
 
     for (r, c) in mino.blocks() {

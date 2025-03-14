@@ -19,7 +19,12 @@ pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &
     displayer.field();
 }
 
-pub fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer, falling_timer: &mut Timer) {
+pub fn hold_mino(
+    rng: &mut ThreadRng,
+    game_state: &mut GameState,
+    displayer: &Displayer,
+    falling_timer: &mut Timer,
+) {
     let current_mino = match &mut game_state.current_mino {
         Some(current_mino) => current_mino,
         None => return,
