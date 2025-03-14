@@ -33,8 +33,8 @@ async fn main() -> Result<()> {
 
     let mut rng = rand::rng();
     let game_state = Arc::new(Mutex::new(GameState::new(&mut rng)));
-    change_mino(&mut rng, &mut game_state.lock().unwrap());
     let displayer = Displayer::new(Arc::clone(&game_state))?;
+    change_mino(&mut rng, &mut game_state.lock().unwrap(), &displayer);
 
     main_loop(&mut rng, Arc::clone(&game_state), &displayer).await;
 
@@ -49,7 +49,7 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
     let mut event_manager = event::EventManager::new();
     let mut term_event_reader = EventStream::new();
     falling_timer.start(game_state.lock().unwrap().falling_speed);
-    displayer.display();
+    displayer.all();
 
     loop {
         tokio::select! {
@@ -61,15 +61,14 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
                     key_pressed(rng, &mut game_state.lock().unwrap(), displayer, &mut falling_timer, event_manager.sender(), key_event).await;
                 },
                 TermEvent::Resize(_, _) => {
-                    displayer.display();
+                    displayer.all();
                 }
                 _ => {}
             },
             Some(_) = falling_timer.receive() => {
                 let game_state = &mut game_state.lock().unwrap();
-                fall_mino(rng, game_state);
+                fall_mino(rng, game_state, displayer);
                 falling_timer.start(game_state.falling_speed);
-                displayer.display();
             }
         }
     }
@@ -152,8 +151,7 @@ async fn key_pressed(
             }
             KeyCode::Char(c) if ['x', 'z'].contains(&c) => rotate_mino(game_state, displayer, c),
             KeyCode::Char('c') => {
-                hold_mino(rng, game_state, falling_timer);
-                displayer.display();
+                hold_mino(rng, game_state, displayer, falling_timer);
             }
             KeyCode::Char(' ') => hard_drop(rng, game_state, displayer),
             _ => {}

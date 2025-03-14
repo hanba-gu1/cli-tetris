@@ -1,7 +1,7 @@
 use crossterm::{
     cursor::MoveTo,
     execute,
-    style::{Color, Colors, Print, ResetColor, SetBackgroundColor, SetColors},
+    style::{Color, Print, ResetColor, SetBackgroundColor},
 };
 use std::io::{stdout, Result};
 
@@ -15,7 +15,14 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;
-    let dot_color = Color::DarkGrey;
+
+    let mut display_blocks = game_state.field.blocks.clone();
+
+    if let Some(current_mino) = &game_state.current_mino {
+        let ghost_mino = game_state.field.ghost_mino(current_mino);
+        display_mino(&ghost_mino, true, &mut display_blocks);
+        display_mino(current_mino, false, &mut display_blocks);
+    }
 
     execute!(stdout(), MoveTo(column, row))?;
     for i in 0..FIELD_WIDTH + 2 {
@@ -25,7 +32,7 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
             Print("　"),
         )?;
     }
-    for (i, blocks_row) in game_state.field.blocks.iter().enumerate() {
+    for (i, blocks_row) in display_blocks.iter().enumerate() {
         execute!(
             stdout(),
             MoveTo(column, row + i as u16 + 1),
@@ -35,7 +42,7 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
         for block in blocks_row {
             execute!(
                 stdout(),
-                SetColors(Colors::new(dot_color, block.unwrap_or(field_color))),
+                SetBackgroundColor(block.unwrap_or(field_color)),
                 Print("　"),
             )?;
         }
@@ -64,36 +71,20 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
     }
     execute!(stdout(), ResetColor)?;
 
-    if let Some(current_mino) = &game_state.current_mino {
-        let ghost_mino = game_state.field.ghost_mino(current_mino);
-        display_mino(column, row, &ghost_mino, true)?;
-        display_mino(column, row, current_mino, false)?;
-    }
-
     Ok(())
 }
 
-fn display_mino(column: u16, row: u16, mino: &Mino, is_ghost: bool) -> Result<()> {
+fn display_mino(mino: &Mino, is_ghost: bool, display_block: &mut [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize]) {
     let ghost_color = Color::DarkGrey;
 
     for (r, c) in mino.blocks() {
-        let mass_row = row as i16 + 1 + r;
-        let mass_column = column as i16 + 2 + c * 2;
-        if 0 <= mass_column && 0 <= mass_row {
+        if 0 <= c && c < FIELD_WIDTH as i16 && 0 <= r && r < FIELD_HEIGHT as i16 {
             let color = if is_ghost {
                 ghost_color
             } else {
                 mino.mino_type.color()
             };
-            execute!(
-                stdout(),
-                MoveTo(mass_column as u16, mass_row as u16),
-                SetBackgroundColor(color),
-                Print("　"),
-            )?;
-            execute!(stdout(), ResetColor)?;
+            display_block[r as usize][c as usize] = Some(color);
         }
     }
-
-    Ok(())
 }
