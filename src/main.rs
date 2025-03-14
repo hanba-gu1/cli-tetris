@@ -60,9 +60,7 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
                 TermEvent::Key(key_event) => {
                     key_pressed(rng, &mut game_state.lock().unwrap(), displayer, &mut falling_timer, event_manager.sender(), key_event).await;
                 },
-                TermEvent::Resize(_, _) => {
-                    displayer.all();
-                }
+                TermEvent::Resize(_, _) => displayer.all(),
                 _ => {}
             },
             Some(_) = falling_timer.receive() => {
@@ -127,11 +125,6 @@ impl Timer {
             let _ = sender.send(()).await;
         }));
     }
-    fn stop(&mut self) {
-        if let Some(handle) = &self.handle {
-            handle.abort();
-        }
-    }
     async fn receive(&mut self) -> Option<()> {
         self.receiver.recv().await
     }
@@ -158,7 +151,7 @@ async fn key_pressed(
             KeyCode::Char('c') => {
                 hold_mino(rng, game_state, displayer, falling_timer);
             }
-            KeyCode::Char(' ') => hard_drop(rng, game_state, displayer),
+            KeyCode::Char(' ') => hard_drop(rng, game_state, displayer, falling_timer),
             _ => {}
         }
     }

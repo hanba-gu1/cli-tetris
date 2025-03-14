@@ -100,10 +100,11 @@ pub fn rotate_mino(game_state: &mut GameState, displayer: &Displayer, c: char) {
     }
 }
 
-pub fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer) {
+pub fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, displayer: &Displayer, falling_timer: &mut Timer) {
     if let Some(current_mino) = &mut game_state.current_mino {
         *current_mino = game_state.field.ghost_mino(current_mino);
         game_state.field.place_mino(current_mino);
         change_mino(rng, game_state, displayer);
+        falling_timer.start(game_state.falling_speed);
     }
 }
