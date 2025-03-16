@@ -7,30 +7,44 @@ pub const FIELD_WIDTH: u16 = 10;
 
 #[derive(Clone, PartialEq)]
 pub struct Field {
-    pub blocks: [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize],
+    blocks: [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize * 2],
 }
 impl Field {
-    pub(super) fn new() -> Self {
-        let blocks = [[None; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize];
+    pub fn new() -> Self {
+        let blocks = [[None; FIELD_WIDTH as usize]; 2 * FIELD_HEIGHT as usize];
         Self { blocks }
+    }
+    pub fn display_blocks(&self) -> [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize] {
+        let mut display_blocks = [[None; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize];
+        for (display_block, block) in display_blocks
+            .iter_mut()
+            .zip(self.blocks.iter().skip(FIELD_HEIGHT as usize))
+        {
+            *display_block = block.clone();
+        }
+        display_blocks
     }
     fn is_empty(&self, row: i16, column: i16) -> bool {
         (0 <= row && row < FIELD_HEIGHT as i16)
             && (0 <= column && column < FIELD_WIDTH as i16)
-            && self.blocks[row as usize][column as usize].is_none()
+            && self.blocks[row as usize + FIELD_HEIGHT as usize][column as usize].is_none()
     }
     pub fn can_move(&self, mino: &Mino) -> bool {
         mino.blocks().iter().all(|(r, c)| self.is_empty(*r, *c))
     }
+    pub fn on_ground(&self, mino: &Mino) -> bool {
+        !mino.blocks().iter().all(|(r, c)| self.is_empty(*r + 1, *c))
+    }
     pub fn place_mino(&mut self, mino: &Mino) {
         for (r, c) in mino.blocks() {
-            self.blocks[r as usize][c as usize] = Some(mino.mino_type.color());
+            self.blocks[r as usize + FIELD_HEIGHT as usize][c as usize] =
+                Some(mino.mino_type.color());
         }
         self.clear_lines();
     }
     pub fn clear_lines(&mut self) {
         let mut clear_lines_count = 0;
-        for row in (0..FIELD_HEIGHT as i16).rev() {
+        for row in (0..FIELD_HEIGHT as i16 * 2).rev() {
             if self.blocks[row as usize]
                 .iter()
                 .all(|block| block.is_some())
@@ -46,10 +60,9 @@ impl Field {
     }
     pub fn ghost_mino(&self, mino: &Mino) -> Mino {
         let mut ghost_mino = mino.clone();
-        while self.can_move(&ghost_mino) {
+        while !self.on_ground(&ghost_mino) {
             ghost_mino.row += 1;
         }
-        ghost_mino.row -= 1;
         ghost_mino
     }
 }

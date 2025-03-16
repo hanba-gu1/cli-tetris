@@ -26,7 +26,7 @@ pub async fn term_operation(event_sender: EventSender) {
 async fn key_pressed(
     event_sender: &EventSender,
     key_event_handles: &mut HashMap<KeyCode, Option<tokio::task::JoinHandle<()>>>,
-    key_event: KeyEvent
+    key_event: KeyEvent,
 ) {
     use event::mino_operation::MinoOperation::*;
 
@@ -36,8 +36,14 @@ async fn key_pressed(
         KeyEventKind::Press => {
             let event = match key_event.code {
                 KeyCode::Esc => Some((Event::End, None)),
-                KeyCode::Left => Some((Event::MinoOperation(Move(Direction::Left)), Some(move_repeat_duration))),
-                KeyCode::Right => Some((Event::MinoOperation(Move(Direction::Right)), Some(move_repeat_duration))),
+                KeyCode::Left => Some((
+                    Event::MinoOperation(Move(Direction::Left)),
+                    Some(move_repeat_duration),
+                )),
+                KeyCode::Right => Some((
+                    Event::MinoOperation(Move(Direction::Right)),
+                    Some(move_repeat_duration),
+                )),
                 KeyCode::Down => Some((Event::MinoOperation(SoftDrop), None)),
                 KeyCode::Char('z') => Some((Event::MinoOperation(RotateLeft), None)),
                 KeyCode::Char('x') => Some((Event::MinoOperation(RotateRight), None)),

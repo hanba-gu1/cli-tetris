@@ -16,7 +16,7 @@ pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;
 
-    let mut display_blocks = game_state.field.blocks.clone();
+    let mut display_blocks = game_state.field.display_blocks();
 
     if let Some(current_mino) = &game_state.current_mino {
         let ghost_mino = game_state.field.ghost_mino(current_mino);
