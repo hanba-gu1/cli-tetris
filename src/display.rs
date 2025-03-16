@@ -17,7 +17,7 @@ enum DisplayMessage {
     Field,
     Hold,
     Next,
-    Exit,
+    End,
 }
 
 pub struct Displayer {
@@ -56,7 +56,7 @@ impl Displayer {
                     DisplayMessage::Next => {
                         slot::display_next(next_slot_column, next_slot_row, &next_minos)?
                     }
-                    DisplayMessage::Exit => break,
+                    DisplayMessage::End => break,
                 }
             }
 
@@ -78,7 +78,7 @@ impl Displayer {
         let _ = self.sender.send(DisplayMessage::Next);
     }
     pub async fn exit(self) -> Result<()> {
-        let _ = self.sender.send(DisplayMessage::Exit);
+        let _ = self.sender.send(DisplayMessage::End);
         self.handle.await?
     }
 }

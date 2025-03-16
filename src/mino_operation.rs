@@ -68,10 +68,6 @@ fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mu
         }
     }
     game_state.can_hold = false;
-    falling_timer.start(
-        game_state.falling_speed,
-        Event::MinoOperation(MinoOperation::Fall),
-    );
 }
 
 fn fall_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {

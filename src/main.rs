@@ -47,10 +47,6 @@ async fn main() -> Result<()> {
 async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displayer: &Displayer) {
     let mut event_manager = event::EventManager::new();
     let mut falling_timer = Timer::new(event_manager.sender());
-    falling_timer.start(
-        game_state.lock().unwrap().falling_speed,
-        Event::MinoOperation(MinoOperation::Fall),
-    );
     tokio::spawn(term_operation::term_operation(event_manager.sender()));
     event_manager
         .send(Event::MinoOperation(MinoOperation::Change))
@@ -64,12 +60,12 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
             match event {
                 Event::End => break,
                 Event::DisplayAll => displayer.all(),
-                Event::MinoOperation(mino_operation) => {
+                Event::MinoOperation(event) => {
                     mino_operation::mino_operation(
                         rng,
                         &mut game_state.lock().unwrap(),
                         &mut falling_timer,
-                        mino_operation,
+                        event,
                     )
                     .await
                 }
