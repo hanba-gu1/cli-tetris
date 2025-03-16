@@ -24,8 +24,8 @@ pub async fn mino_operation(
             move_mino(game_state, move_row, move_column);
         }
         MinoOperation::Fall => fall_mino(rng, game_state, falling_timer),
-        MinoOperation::RotateLeft => rotate_mino(game_state, 'z'),
-        MinoOperation::RotateRight => rotate_mino(game_state, 'x'),
+        MinoOperation::RotateLeft => rotate_mino(game_state, false),
+        MinoOperation::RotateRight => rotate_mino(game_state, true),
         MinoOperation::Hold => hold_mino(rng, game_state, falling_timer),
         MinoOperation::HardDrop => hard_drop(rng, game_state, falling_timer),
         MinoOperation::SoftDrop => move_mino(game_state, 1, 0),
@@ -100,13 +100,13 @@ fn move_mino(game_state: &mut GameState, move_row: i16, move_column: i16) {
     }
 }
 
-fn rotate_mino(game_state: &mut GameState, c: char) {
+fn rotate_mino(game_state: &mut GameState, is_right: bool) {
     if let Some(current_mino) = &mut game_state.current_mino {
         let mut temp_mino = current_mino.clone();
-        match c {
-            'x' => temp_mino.rotation.rotate_right(),
-            'z' => temp_mino.rotation.rotate_left(),
-            _ => {}
+        if is_right {
+            temp_mino.rotation.rotate_right();
+        } else {
+            temp_mino.rotation.rotate_left();
         }
         for (r, c) in temp_mino.super_rotation(current_mino.rotation) {
             let temp_mino = Mino {
