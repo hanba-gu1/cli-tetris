@@ -2,7 +2,7 @@ use tokio::sync::mpsc;
 
 pub mod mino_operation;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Event {
     End,
     DisplayAll,

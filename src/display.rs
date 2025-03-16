@@ -17,15 +17,17 @@ enum DisplayMessage {
     Field,
     Hold,
     Next,
+    Exit,
 }
 
 pub struct Displayer {
+    handle: tokio::task::JoinHandle<Result<()>>,
     sender: std::sync::mpsc::Sender<DisplayMessage>,
 }
 impl Displayer {
     pub fn new(game_state: Arc<Mutex<GameState>>) -> Result<Self> {
         let (sender, receiver) = std::sync::mpsc::channel();
-        tokio::task::spawn_blocking(move || -> Result<()> {
+        let handle = tokio::task::spawn_blocking(move || -> Result<()> {
             let hold_slot_column = 0;
             let hold_slot_row = 0;
             let field_column = 15;
@@ -54,12 +56,13 @@ impl Displayer {
                     DisplayMessage::Next => {
                         slot::display_next(next_slot_column, next_slot_row, &next_minos)?
                     }
+                    DisplayMessage::Exit => break,
                 }
             }
 
             Ok(())
         });
-        Ok(Self { sender })
+        Ok(Self { handle, sender })
     }
 
     pub fn all(&self) {
@@ -73,5 +76,9 @@ impl Displayer {
     }
     pub fn next(&self) {
         let _ = self.sender.send(DisplayMessage::Next);
+    }
+    pub async fn exit(self) -> Result<()> {
+        let _ = self.sender.send(DisplayMessage::Exit);
+        self.handle.await?
     }
 }

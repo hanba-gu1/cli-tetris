@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum MinoOperation {
     Move(Direction),
     Fall,
@@ -10,7 +10,7 @@ pub enum MinoOperation {
     Change,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Direction {
     Left,
     Right,

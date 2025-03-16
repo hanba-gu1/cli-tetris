@@ -36,6 +36,8 @@ async fn main() -> Result<()> {
 
     main_loop(&mut rng, Arc::clone(&game_state), &displayer).await;
 
+    displayer.exit().await?;
+
     execute!(stdout(), LeaveAlternateScreen)?;
     disable_raw_mode()?;
 
