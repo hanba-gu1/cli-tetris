@@ -1,11 +1,9 @@
 use crossterm::{
     cursor::Hide,
-    event::{Event as TermEvent, EventStream, KeyCode, KeyEvent, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use display::Displayer;
-use futures::{FutureExt, StreamExt};
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 use std::{
     collections::VecDeque,
@@ -13,18 +11,19 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
-use tokio::sync::mpsc;
 
 mod display;
 mod event;
 mod field;
 mod mino;
 mod mino_operation;
+mod term_operation;
+mod timer;
 
-use event::{Event, EventSender};
+use event::{mino_operation::MinoOperation, Event};
 use field::Field;
 use mino::{Mino, MinoType};
-use mino_operation::{change_mino, fall_mino, hard_drop, hold_mino, move_mino, rotate_mino};
+use timer::Timer;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -34,7 +33,6 @@ async fn main() -> Result<()> {
     let mut rng = rand::rng();
     let game_state = Arc::new(Mutex::new(GameState::new(&mut rng)));
     let displayer = Displayer::new(Arc::clone(&game_state))?;
-    change_mino(&mut rng, &mut game_state.lock().unwrap());
 
     main_loop(&mut rng, Arc::clone(&game_state), &displayer).await;
 
@@ -45,31 +43,41 @@ async fn main() -> Result<()> {
 }
 
 async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displayer: &Displayer) {
-    let mut falling_timer = Timer::new();
     let mut event_manager = event::EventManager::new();
-    let mut term_event_reader = EventStream::new();
-    falling_timer.start(game_state.lock().unwrap().falling_speed);
+    let mut falling_timer = Timer::new(event_manager.sender());
+    falling_timer.start(
+        game_state.lock().unwrap().falling_speed,
+        Event::MinoOperation(MinoOperation::Fall),
+    );
+    tokio::spawn(term_operation::term_operation(event_manager.sender()));
+    event_manager
+        .send(Event::MinoOperation(MinoOperation::Change))
+        .await;
     displayer.all();
 
     let mut pre_game_state = game_state.lock().unwrap().clone();
 
     loop {
-        tokio::select! {
-            Some(event) = event_manager.recv() => match event {
+        if let Some(event) = event_manager.recv().await {
+            match event {
                 Event::End => break,
-            },
-            Some(Ok(term_event)) = term_event_reader.next().fuse() => match term_event {
-                TermEvent::Key(key_event) => {
-                    key_pressed(rng, &mut game_state.lock().unwrap(), &mut falling_timer, event_manager.sender(), key_event).await;
-                },
-                TermEvent::Resize(_, _) => displayer.all(),
-                _ => {}
-            },
-            Some(_) = falling_timer.receive() => fall_mino(rng, &mut game_state.lock().unwrap(), &mut falling_timer),
+                Event::DisplayAll => displayer.all(),
+                Event::MinoOperation(mino_operation) => {
+                    mino_operation::mino_operation(
+                        rng,
+                        &mut game_state.lock().unwrap(),
+                        &mut falling_timer,
+                        mino_operation,
+                    )
+                    .await
+                }
+            }
         }
 
         let game_state = game_state.lock().unwrap();
-        if game_state.field != pre_game_state.field || game_state.current_mino != pre_game_state.current_mino {
+        if game_state.field != pre_game_state.field
+            || game_state.current_mino != pre_game_state.current_mino
+        {
             displayer.field();
         }
         if game_state.held_mino != pre_game_state.held_mino {
@@ -111,59 +119,6 @@ impl GameState {
             next_minos,
             falling_speed,
             can_hold,
-        }
-    }
-}
-
-struct Timer {
-    sender: mpsc::Sender<()>,
-    receiver: mpsc::Receiver<()>,
-    handle: Option<tokio::task::JoinHandle<()>>,
-}
-impl Timer {
-    fn new() -> Self {
-        let (sender, receiver) = mpsc::channel(128);
-        Self {
-            sender,
-            receiver,
-            handle: None,
-        }
-    }
-    fn start(&mut self, time: Duration) {
-        if let Some(handle) = &self.handle {
-            handle.abort();
-        }
-        let sender = self.sender.clone();
-        self.handle = Some(tokio::spawn(async move {
-            tokio::time::sleep(time).await;
-            let _ = sender.send(()).await;
-        }));
-    }
-    async fn receive(&mut self) -> Option<()> {
-        self.receiver.recv().await
-    }
-}
-
-async fn key_pressed(
-    rng: &mut ThreadRng,
-    game_state: &mut GameState,
-    falling_timer: &mut Timer,
-    event_sender: EventSender,
-    key_event: KeyEvent,
-) {
-    if key_event.kind == KeyEventKind::Press {
-        match key_event.code {
-            KeyCode::Esc => event_sender.send(Event::End).await,
-            KeyCode::Right => move_mino(game_state, 0, 1),
-            KeyCode::Left => move_mino(game_state, 0, -1),
-            KeyCode::Down => {
-                move_mino(game_state, 1, 0);
-                falling_timer.start(game_state.falling_speed);
-            }
-            KeyCode::Char(c) if ['x', 'z'].contains(&c) => rotate_mino(game_state, c),
-            KeyCode::Char('c') => hold_mino(rng, game_state, falling_timer),
-            KeyCode::Char(' ') => hard_drop(rng, game_state, falling_timer),
-            _ => {}
         }
     }
 }

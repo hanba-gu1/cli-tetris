@@ -1,11 +1,39 @@
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 
 use crate::{
+    event::{
+        mino_operation::{Direction, MinoOperation},
+        Event,
+    },
     mino::{Mino, MinoType},
     GameState, Timer,
 };
 
-pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
+pub async fn mino_operation(
+    rng: &mut ThreadRng,
+    game_state: &mut GameState,
+    falling_timer: &mut Timer,
+    event: MinoOperation,
+) {
+    match event {
+        MinoOperation::Move(direction) => {
+            let (move_row, move_column) = match direction {
+                Direction::Left => (0, -1),
+                Direction::Right => (0, 1),
+            };
+            move_mino(game_state, move_row, move_column);
+        }
+        MinoOperation::Fall => fall_mino(rng, game_state, falling_timer),
+        MinoOperation::RotateLeft => rotate_mino(game_state, 'z'),
+        MinoOperation::RotateRight => rotate_mino(game_state, 'x'),
+        MinoOperation::Hold => hold_mino(rng, game_state, falling_timer),
+        MinoOperation::HardDrop => hard_drop(rng, game_state, falling_timer),
+        MinoOperation::SoftDrop => move_mino(game_state, 1, 0),
+        MinoOperation::Change => change_mino(rng, game_state, falling_timer),
+    }
+}
+
+fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {
     let all_minos = MinoType::all_minos();
 
     if game_state.next_minos.iter().count() <= all_minos.iter().count() {
@@ -15,13 +43,13 @@ pub fn change_mino(rng: &mut ThreadRng, game_state: &mut GameState) {
     }
     game_state.current_mino = Some(Mino::new(game_state.next_minos.pop_front().unwrap()));
     game_state.can_hold = true;
+    falling_timer.start(
+        game_state.falling_speed,
+        Event::MinoOperation(MinoOperation::Fall),
+    );
 }
 
-pub fn hold_mino(
-    rng: &mut ThreadRng,
-    game_state: &mut GameState,
-    falling_timer: &mut Timer,
-) {
+fn hold_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {
     let current_mino = match &mut game_state.current_mino {
         Some(current_mino) => current_mino,
         None => return,
@@ -36,18 +64,17 @@ pub fn hold_mino(
         }
         None => {
             game_state.held_mino = Some(game_state.current_mino.as_ref().unwrap().mino_type);
-            change_mino(rng, game_state);
+            change_mino(rng, game_state, falling_timer);
         }
     }
     game_state.can_hold = false;
-    falling_timer.start(game_state.falling_speed);
+    falling_timer.start(
+        game_state.falling_speed,
+        Event::MinoOperation(MinoOperation::Fall),
+    );
 }
 
-pub fn fall_mino(
-    rng: &mut ThreadRng,
-    game_state: &mut GameState,
-    falling_timer: &mut Timer,
-) {
+fn fall_mino(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {
     if let Some(current_mino) = &mut game_state.current_mino {
         let temp_mino = Mino {
             row: current_mino.row + 1,
@@ -56,18 +83,17 @@ pub fn fall_mino(
         if game_state.field.can_move(&temp_mino) {
             *current_mino = temp_mino;
         } else {
-            game_state.field.place_mino(current_mino);
-            change_mino(rng, game_state);
+            place_mino(game_state);
+            change_mino(rng, game_state, falling_timer);
         }
-        falling_timer.start(game_state.falling_speed);
+        falling_timer.start(
+            game_state.falling_speed,
+            Event::MinoOperation(MinoOperation::Fall),
+        );
     }
 }
 
-pub fn move_mino(
-    game_state: &mut GameState,
-    move_row: i16,
-    move_column: i16,
-) {
+fn move_mino(game_state: &mut GameState, move_row: i16, move_column: i16) {
     if let Some(current_mino) = &mut game_state.current_mino {
         let mut temp_mino = current_mino.clone();
         temp_mino.column += move_column;
@@ -78,7 +104,7 @@ pub fn move_mino(
     }
 }
 
-pub fn rotate_mino(game_state: &mut GameState, c: char) {
+fn rotate_mino(game_state: &mut GameState, c: char) {
     if let Some(current_mino) = &mut game_state.current_mino {
         let mut temp_mino = current_mino.clone();
         match c {
@@ -100,15 +126,17 @@ pub fn rotate_mino(game_state: &mut GameState, c: char) {
     }
 }
 
-pub fn hard_drop(
-    rng: &mut ThreadRng,
-    game_state: &mut GameState,
-    falling_timer: &mut Timer,
-) {
+fn hard_drop(rng: &mut ThreadRng, game_state: &mut GameState, falling_timer: &mut Timer) {
     if let Some(current_mino) = &mut game_state.current_mino {
         *current_mino = game_state.field.ghost_mino(current_mino);
+        place_mino(game_state);
+        change_mino(rng, game_state, falling_timer);
+    }
+}
+
+fn place_mino(game_state: &mut GameState) {
+    if let Some(current_mino) = &mut game_state.current_mino {
         game_state.field.place_mino(current_mino);
-        change_mino(rng, game_state);
-        falling_timer.start(game_state.falling_speed);
+        game_state.current_mino = None;
     }
 }
