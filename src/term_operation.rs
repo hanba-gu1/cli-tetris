@@ -44,7 +44,7 @@ async fn key_pressed(
                     Event::MinoOperation(Move(Direction::Right)),
                     Some(move_repeat_duration),
                 )),
-                KeyCode::Down => Some((Event::MinoOperation(SoftDrop), None)),
+                KeyCode::Down => Some((Event::MinoOperation(StartSoftDrop), None)),
                 KeyCode::Char('z') => Some((Event::MinoOperation(RotateLeft), None)),
                 KeyCode::Char('x') => Some((Event::MinoOperation(RotateRight), None)),
                 KeyCode::Char('c') => Some((Event::MinoOperation(Hold), None)),
@@ -72,6 +72,10 @@ async fn key_pressed(
             }
         }
         KeyEventKind::Release => {
+            match key_event.code {
+                KeyCode::Down => event_sender.send(Event::MinoOperation(EndSoftDrop)).await,
+                _ => {}
+            }
             if let Some(Some(key_event_handle)) = key_event_handles.remove(&key_event.code) {
                 key_event_handle.abort();
             }

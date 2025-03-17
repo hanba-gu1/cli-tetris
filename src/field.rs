@@ -25,9 +25,9 @@ impl Field {
         display_blocks
     }
     fn is_empty(&self, row: i16, column: i16) -> bool {
-        (0 <= row && row < FIELD_HEIGHT as i16)
+        (-(FIELD_HEIGHT as i16) <= row && row < FIELD_HEIGHT as i16)
             && (0 <= column && column < FIELD_WIDTH as i16)
-            && self.blocks[row as usize + FIELD_HEIGHT as usize][column as usize].is_none()
+            && self.blocks[(row + FIELD_HEIGHT as i16) as usize][column as usize].is_none()
     }
     pub fn can_move(&self, mino: &Mino) -> bool {
         mino.blocks().iter().all(|(r, c)| self.is_empty(*r, *c))
@@ -37,7 +37,7 @@ impl Field {
     }
     pub fn place_mino(&mut self, mino: &Mino) {
         for (r, c) in mino.blocks() {
-            self.blocks[r as usize + FIELD_HEIGHT as usize][c as usize] =
+            self.blocks[(r + FIELD_HEIGHT as i16) as usize][c as usize] =
                 Some(mino.mino_type.color());
         }
         self.clear_lines();

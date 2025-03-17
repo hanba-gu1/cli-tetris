@@ -6,7 +6,8 @@ pub enum MinoOperation {
     RotateRight,
     Hold,
     HardDrop,
-    SoftDrop,
+    StartSoftDrop,
+    EndSoftDrop,
     Change,
 }
 

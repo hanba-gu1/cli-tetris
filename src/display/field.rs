@@ -82,7 +82,7 @@ fn display_mino(
     let ghost_color = Color::DarkGrey;
 
     for (r, c) in mino.blocks() {
-        if 0 <= c && c < FIELD_WIDTH as i16 && 0 <= r && r < FIELD_HEIGHT as i16 {
+        if 0 <= r && r < FIELD_HEIGHT as i16 && 0 <= c && c < FIELD_WIDTH as i16 {
             let color = if is_ghost {
                 ghost_color
             } else {

@@ -4,6 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use display::Displayer;
+use falling_clock::FallingClock;
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 use std::{
     collections::VecDeque,
@@ -14,16 +15,17 @@ use std::{
 
 mod display;
 mod event;
+mod falling_clock;
 mod field;
 mod mino;
 mod mino_operation;
 mod term_operation;
-mod timer;
 
-use event::{mino_operation::MinoOperation, Event};
-use field::Field;
-use mino::{Mino, MinoType};
-use timer::Timer;
+use crate::{
+    event::{mino_operation::MinoOperation, Event},
+    field::Field,
+    mino::{Mino, MinoType},
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -46,7 +48,7 @@ async fn main() -> Result<()> {
 
 async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displayer: &Displayer) {
     let mut event_manager = event::EventManager::new();
-    let mut falling_timer = Timer::new(event_manager.sender());
+    let mut falling_clock = FallingClock::new(event_manager.sender());
     tokio::spawn(term_operation::term_operation(event_manager.sender()));
     event_manager
         .send(Event::MinoOperation(MinoOperation::Change))
@@ -64,7 +66,7 @@ async fn main_loop(rng: &mut ThreadRng, game_state: Arc<Mutex<GameState>>, displ
                     mino_operation::mino_operation(
                         rng,
                         &mut game_state.lock().unwrap(),
-                        &mut falling_timer,
+                        &mut falling_clock,
                         event,
                     )
                     .await
@@ -95,6 +97,7 @@ struct GameState {
     held_mino: Option<MinoType>,
     next_minos: VecDeque<MinoType>,
     falling_speed: Duration,
+    soft_drop: bool,
     can_hold: bool,
 }
 impl GameState {
@@ -106,8 +109,9 @@ impl GameState {
             all_minos.into_iter().collect()
         };
         let current_mino = None;
-        let held_mino: Option<MinoType> = None;
+        let held_mino = None;
         let falling_speed = Duration::from_secs(1);
+        let soft_drop = false;
         let can_hold = true;
 
         Self {
@@ -116,6 +120,7 @@ impl GameState {
             held_mino,
             next_minos,
             falling_speed,
+            soft_drop,
             can_hold,
         }
     }
