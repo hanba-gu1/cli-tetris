@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub enum MinoOperation {
+pub(crate) enum MinoOperation {
     Move(Direction),
     Fall,
     RotateLeft,
@@ -12,7 +12,7 @@ pub enum MinoOperation {
 }
 
 #[derive(Clone, Copy)]
-pub enum Direction {
+pub(crate) enum Direction {
     Left,
     Right,
 }

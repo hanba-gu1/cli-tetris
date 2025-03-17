@@ -26,7 +26,7 @@ fn display_mino(column: u16, row: u16, mino: MinoType) -> Result<()> {
     Ok(())
 }
 
-pub fn display_hold(column: u16, row: u16, held_mino: &Option<MinoType>) -> Result<()> {
+pub(super) fn display_hold(column: u16, row: u16, held_mino: &Option<MinoType>) -> Result<()> {
     let height = 4;
 
     execute!(stdout(), MoveTo(column, row), Print("┌─── HOLD ───┐"))?;
@@ -50,7 +50,7 @@ pub fn display_hold(column: u16, row: u16, held_mino: &Option<MinoType>) -> Resu
     Ok(())
 }
 
-pub fn display_next(column: u16, row: u16, minos: &[MinoType]) -> Result<()> {
+pub(super) fn display_next(column: u16, row: u16, minos: &[MinoType]) -> Result<()> {
     let count = 6;
     let minos: Vec<_> = minos.iter().take(count).map(|m| *m).collect();
     let height = 3;

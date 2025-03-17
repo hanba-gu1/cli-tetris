@@ -11,7 +11,7 @@ use crate::{
     GameState,
 };
 
-pub fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()> {
+pub(super) fn display_field(column: u16, row: u16, game_state: &GameState) -> Result<()> {
     let edge_color1 = Color::DarkGrey;
     let edge_color2 = Color::Grey;
     let field_color = Color::Black;

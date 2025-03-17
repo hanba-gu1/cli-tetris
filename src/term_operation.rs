@@ -5,7 +5,7 @@ use futures::{FutureExt, StreamExt};
 
 use crate::event::{self, mino_operation::Direction, Event, EventSender};
 
-pub async fn term_operation(event_sender: EventSender) {
+pub(super) async fn term_operation(event_sender: EventSender) {
     let mut key_event_handles = HashMap::new();
     let mut term_event_reader = EventStream::new();
 

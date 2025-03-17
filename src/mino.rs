@@ -1,7 +1,7 @@
 use crossterm::style::Color;
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum MinoType {
+pub(super) enum MinoType {
     I,
     O,
     S,
@@ -11,7 +11,7 @@ pub enum MinoType {
     T,
 }
 impl MinoType {
-    pub fn all_minos() -> Vec<MinoType> {
+    pub(super) fn all_minos() -> Vec<MinoType> {
         vec![
             MinoType::I,
             MinoType::J,
@@ -23,7 +23,7 @@ impl MinoType {
         ]
     }
 
-    pub fn color(&self) -> Color {
+    pub(super) fn color(&self) -> Color {
         use MinoType::*;
         match self {
             I => Color::Cyan,
@@ -35,7 +35,7 @@ impl MinoType {
             T => Color::DarkMagenta,
         }
     }
-    pub fn blocks(&self, rotation: Rotation) -> &[(u16, u16)] {
+    pub(super) fn blocks(&self, rotation: Rotation) -> &[(u16, u16)] {
         use MinoType::*;
         match &self {
             I => match rotation {
@@ -88,14 +88,14 @@ impl MinoType {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum Rotation {
+pub(super) enum Rotation {
     A,
     B,
     C,
     D,
 }
 impl Rotation {
-    pub fn rotate_right(&mut self) {
+    pub(super) fn rotate_right(&mut self) {
         use Rotation::*;
         *self = match self {
             A => B,
@@ -104,7 +104,7 @@ impl Rotation {
             D => A,
         };
     }
-    pub fn rotate_left(&mut self) {
+    pub(super) fn rotate_left(&mut self) {
         use Rotation::*;
         *self = match self {
             A => D,
@@ -116,14 +116,14 @@ impl Rotation {
 }
 
 #[derive(Clone, PartialEq)]
-pub struct Mino {
-    pub mino_type: MinoType,
-    pub row: i16,
-    pub column: i16,
-    pub rotation: Rotation,
+pub(super) struct Mino {
+    pub(super) mino_type: MinoType,
+    pub(super) row: i16,
+    pub(super) column: i16,
+    pub(super) rotation: Rotation,
 }
 impl Mino {
-    pub fn new(mino_type: MinoType) -> Self {
+    pub(super) fn new(mino_type: MinoType) -> Self {
         let (row, column) = mino_type.start_pos();
         Self {
             mino_type,
@@ -132,14 +132,14 @@ impl Mino {
             rotation: Rotation::A,
         }
     }
-    pub fn blocks(&self) -> Vec<(i16, i16)> {
+    pub(super) fn blocks(&self) -> Vec<(i16, i16)> {
         self.mino_type
             .blocks(self.rotation)
             .iter()
             .map(|(r, c)| (self.row + *r as i16, self.column + *c as i16))
             .collect()
     }
-    pub fn super_rotation(&self, old_rotation: Rotation) -> &[(i16, i16)] {
+    pub(super) fn super_rotation(&self, old_rotation: Rotation) -> &[(i16, i16)] {
         match self.mino_type {
             MinoType::I => match old_rotation {
                 Rotation::A => match self.rotation {

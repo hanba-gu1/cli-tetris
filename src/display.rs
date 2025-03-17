@@ -20,12 +20,12 @@ enum DisplayMessage {
     End,
 }
 
-pub struct Displayer {
+pub(crate) struct Displayer {
     handle: tokio::task::JoinHandle<Result<()>>,
     sender: std::sync::mpsc::Sender<DisplayMessage>,
 }
 impl Displayer {
-    pub fn new(game_state: Arc<Mutex<GameState>>) -> Result<Self> {
+    pub(crate) fn new(game_state: Arc<Mutex<GameState>>) -> Result<Self> {
         let (sender, receiver) = std::sync::mpsc::channel();
         let handle = tokio::task::spawn_blocking(move || -> Result<()> {
             let hold_slot_column = 0;
@@ -65,19 +65,19 @@ impl Displayer {
         Ok(Self { handle, sender })
     }
 
-    pub fn all(&self) {
+    pub(crate) fn all(&self) {
         let _ = self.sender.send(DisplayMessage::All);
     }
-    pub fn field(&self) {
+    pub(crate) fn field(&self) {
         let _ = self.sender.send(DisplayMessage::Field);
     }
-    pub fn hold(&self) {
+    pub(crate) fn hold(&self) {
         let _ = self.sender.send(DisplayMessage::Hold);
     }
-    pub fn next(&self) {
+    pub(crate) fn next(&self) {
         let _ = self.sender.send(DisplayMessage::Next);
     }
-    pub async fn exit(self) -> Result<()> {
+    pub(crate) async fn exit(self) -> Result<()> {
         let _ = self.sender.send(DisplayMessage::End);
         self.handle.await?
     }

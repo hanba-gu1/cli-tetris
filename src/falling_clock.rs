@@ -2,18 +2,18 @@ use std::time::Duration;
 
 use crate::event::{mino_operation::MinoOperation, Event, EventSender};
 
-pub struct FallingClock {
+pub(super) struct FallingClock {
     event_sender: EventSender,
     handle: Option<tokio::task::JoinHandle<()>>,
 }
 impl FallingClock {
-    pub fn new(event_sender: EventSender) -> Self {
+    pub(super) fn new(event_sender: EventSender) -> Self {
         Self {
             event_sender,
             handle: None,
         }
     }
-    pub async fn start(&mut self, duration: Duration) {
+    pub(super) async fn start(&mut self, duration: Duration) {
         if let Some(handle) = &self.handle {
             handle.abort();
         }
@@ -28,7 +28,7 @@ impl FallingClock {
         });
         self.handle = Some(handle);
     }
-    pub async fn stop(&self) {
+    pub(super) async fn stop(&self) {
         if let Some(handle) = &self.handle {
             handle.abort();
         }

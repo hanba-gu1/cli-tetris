@@ -7,7 +7,7 @@ use crate::{
     GameState,
 };
 
-pub async fn mino_operation(
+pub(super) async fn mino_operation(
     rng: &mut ThreadRng,
     game_state: &mut GameState,
     falling_clock: &mut FallingClock,
