@@ -14,7 +14,9 @@ impl Field {
         let blocks = [[None; FIELD_WIDTH as usize]; 2 * FIELD_HEIGHT as usize];
         Self { blocks }
     }
-    pub(super) fn display_blocks(&self) -> [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize] {
+    pub(super) fn display_blocks(
+        &self,
+    ) -> [[Option<Color>; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize] {
         let mut display_blocks = [[None; FIELD_WIDTH as usize]; FIELD_HEIGHT as usize];
         for (display_block, block) in display_blocks
             .iter_mut()

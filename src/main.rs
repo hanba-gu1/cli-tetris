@@ -17,6 +17,7 @@ mod display;
 mod event;
 mod falling_clock;
 mod field;
+mod lock_down;
 mod mino;
 mod mino_operation;
 mod term_operation;
@@ -99,29 +100,25 @@ struct GameState {
     falling_speed: Duration,
     soft_drop: bool,
     can_hold: bool,
+    lowest_position: i16,
 }
 impl GameState {
     fn new(rng: &mut ThreadRng) -> Self {
-        let field = Field::new();
         let next_minos: VecDeque<_> = {
             let mut all_minos = MinoType::all_minos();
             all_minos.shuffle(rng);
             all_minos.into_iter().collect()
         };
-        let current_mino = None;
-        let held_mino = None;
-        let falling_speed = Duration::from_secs(1);
-        let soft_drop = false;
-        let can_hold = true;
 
         Self {
-            field,
-            current_mino,
-            held_mino,
+            field: Field::new(),
+            current_mino: None,
+            held_mino: None,
             next_minos,
-            falling_speed,
-            soft_drop,
-            can_hold,
+            falling_speed: Duration::from_secs(1),
+            soft_drop: false,
+            can_hold: true,
+            lowest_position: 0,
         }
     }
 }
