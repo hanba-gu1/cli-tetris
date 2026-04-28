@@ -1,0 +1,190 @@
+use crossterm::style::Color;
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum MinoType {
+    I,
+    O,
+    S,
+    Z,
+    J,
+    L,
+    T,
+}
+impl MinoType {
+    pub(super) fn all_minos() -> Vec<MinoType> {
+        vec![
+            MinoType::I,
+            MinoType::J,
+            MinoType::L,
+            MinoType::O,
+            MinoType::S,
+            MinoType::T,
+            MinoType::Z,
+        ]
+    }
+
+    pub(super) fn color(&self) -> Color {
+        use MinoType::*;
+        match self {
+            I => Color::Cyan,
+            O => Color::Yellow,
+            S => Color::Green,
+            Z => Color::Red,
+            J => Color::Blue,
+            L => Color::DarkYellow,
+            T => Color::DarkMagenta,
+        }
+    }
+    pub(super) fn blocks(&self, rotation: Rotation) -> &[(u16, u16)] {
+        use MinoType::*;
+        match &self {
+            I => match rotation {
+                Rotation::A => &[(1, 0), (1, 1), (1, 2), (1, 3)],
+                Rotation::B => &[(0, 2), (1, 2), (2, 2), (3, 2)],
+                Rotation::C => &[(2, 0), (2, 1), (2, 2), (2, 3)],
+                Rotation::D => &[(0, 1), (1, 1), (2, 1), (3, 1)],
+            },
+            O => &[(0, 0), (0, 1), (1, 0), (1, 1)],
+            S => match rotation {
+                Rotation::A => &[(0, 1), (0, 2), (1, 0), (1, 1)],
+                Rotation::B => &[(0, 1), (1, 1), (1, 2), (2, 2)],
+                Rotation::C => &[(1, 1), (1, 2), (2, 0), (2, 1)],
+                Rotation::D => &[(0, 0), (1, 0), (1, 1), (2, 1)],
+            },
+            Z => match rotation {
+                Rotation::A => &[(0, 0), (0, 1), (1, 1), (1, 2)],
+                Rotation::B => &[(0, 2), (1, 1), (1, 2), (2, 1)],
+                Rotation::C => &[(1, 0), (1, 1), (2, 1), (2, 2)],
+                Rotation::D => &[(0, 1), (1, 0), (1, 1), (2, 0)],
+            },
+            J => match rotation {
+                Rotation::A => &[(0, 0), (1, 0), (1, 1), (1, 2)],
+                Rotation::B => &[(0, 1), (0, 2), (1, 1), (2, 1)],
+                Rotation::C => &[(1, 0), (1, 1), (1, 2), (2, 2)],
+                Rotation::D => &[(0, 1), (1, 1), (2, 0), (2, 1)],
+            },
+            L => match rotation {
+                Rotation::A => &[(0, 2), (1, 0), (1, 1), (1, 2)],
+                Rotation::B => &[(0, 1), (1, 1), (2, 1), (2, 2)],
+                Rotation::C => &[(1, 0), (1, 1), (1, 2), (2, 0)],
+                Rotation::D => &[(0, 0), (0, 1), (1, 1), (2, 1)],
+            },
+            T => match rotation {
+                Rotation::A => &[(0, 1), (1, 0), (1, 1), (1, 2)],
+                Rotation::B => &[(0, 1), (1, 1), (1, 2), (2, 1)],
+                Rotation::C => &[(1, 0), (1, 1), (1, 2), (2, 1)],
+                Rotation::D => &[(0, 1), (1, 0), (1, 1), (2, 1)],
+            },
+        }
+    }
+    fn start_pos(&self) -> (i16, i16) {
+        use MinoType::*;
+        match self {
+            I => (-1, 3),
+            O => (0, 4),
+            _ => (0, 3),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum Rotation {
+    A,
+    B,
+    C,
+    D,
+}
+impl Rotation {
+    pub(super) fn rotate_right(&mut self) {
+        use Rotation::*;
+        *self = match self {
+            A => B,
+            B => C,
+            C => D,
+            D => A,
+        };
+    }
+    pub(super) fn rotate_left(&mut self) {
+        use Rotation::*;
+        *self = match self {
+            A => D,
+            B => A,
+            C => B,
+            D => C,
+        };
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub(super) struct Mino {
+    pub(super) mino_type: MinoType,
+    pub(super) row: i16,
+    pub(super) column: i16,
+    pub(super) rotation: Rotation,
+}
+impl Mino {
+    pub(super) fn new(mino_type: MinoType) -> Self {
+        let (row, column) = mino_type.start_pos();
+        Self {
+            mino_type,
+            row,
+            column,
+            rotation: Rotation::A,
+        }
+    }
+    pub(super) fn blocks(&self) -> Vec<(i16, i16)> {
+        self.mino_type
+            .blocks(self.rotation)
+            .iter()
+            .map(|(r, c)| (self.row + *r as i16, self.column + *c as i16))
+            .collect()
+    }
+    pub(super) fn super_rotation(&self, old_rotation: Rotation) -> &[(i16, i16)] {
+        match self.mino_type {
+            MinoType::I => match old_rotation {
+                Rotation::A => match self.rotation {
+                    Rotation::B => &[(0, 0), (0, -2), (0, 1), (1, -2), (-2, 1)],
+                    Rotation::D => &[(0, 0), (0, -1), (0, 2), (-2, -1), (1, 2)],
+                    _ => panic!(),
+                },
+                Rotation::B => match self.rotation {
+                    Rotation::C => &[(0, 0), (0, -1), (0, 2), (-2, -1), (1, 2)],
+                    Rotation::A => &[(0, 0), (0, 2), (0, -1), (-1, 2), (2, -1)],
+                    _ => panic!(),
+                },
+                Rotation::C => match self.rotation {
+                    Rotation::D => &[(0, 0), (0, 2), (0, -1), (-1, 2), (2, -1)],
+                    Rotation::B => &[(0, 0), (0, 1), (0, -2), (2, 1), (-1, -2)],
+                    _ => panic!(),
+                },
+                Rotation::D => match self.rotation {
+                    Rotation::A => &[(0, 0), (0, 1), (0, -2), (2, 1), (-1, -2)],
+                    Rotation::C => &[(0, 0), (0, -2), (0, 1), (1, -2), (-2, 1)],
+                    _ => panic!(),
+                },
+            },
+            _ => match old_rotation {
+                Rotation::A => match self.rotation {
+                    Rotation::B => &[(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)],
+                    Rotation::D => &[(0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)],
+                    _ => panic!(),
+                },
+                Rotation::B => match self.rotation {
+                    Rotation::C => &[(0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)],
+                    Rotation::A => &[(0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)],
+                    _ => panic!(),
+                },
+                Rotation::C => match self.rotation {
+                    Rotation::D => &[(0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)],
+                    Rotation::B => &[(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)],
+                    _ => panic!(),
+                },
+                Rotation::D => match self.rotation {
+                    Rotation::A => &[(0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)],
+                    Rotation::C => &[(0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)],
+                    _ => panic!(),
+                },
+            },
+        }
+    }
+}
